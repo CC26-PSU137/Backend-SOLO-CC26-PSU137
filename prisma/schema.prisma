@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  password        String
+  createdAt       DateTime          @default(now())
+
+  classifications Classification[]
+  quizAttempts    QuizAttempt[]
+}
+
+model Classification {
+  id          String      @id @default(cuid())
+  imageUrl    String
+  prediction  WasteType
+  confidence  Float
+  description String?
+  createdAt   DateTime    @default(now())
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id            String   @id @default(cuid())
+
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+
+  correctAnswer String
+  explanation   String?
+
+  createdAt     DateTime @default(now())
+
+  answers       QuizAnswer[]
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+
+  score       Int
+
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  answers     QuizAnswer[]
+}
+
+model QuizAnswer {
+  id String @id @default(cuid())
+
+  selectedAnswer String
+
+  isCorrect Boolean
+
+  attemptId String
+  attempt QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  quizId String
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+enum WasteType {
+  ORGANIK
+  ANORGANIK
+  B3
+}
