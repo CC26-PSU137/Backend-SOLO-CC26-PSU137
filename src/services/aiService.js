@@ -7,9 +7,15 @@ const predictImage = async (imagePath) => {
   try {
     const formData = new FormData();
 
+    const fileBuffer =
+      fs.readFileSync(imagePath);
+
     formData.append(
       'file',
-      fs.createReadStream(imagePath)
+      fileBuffer,
+      {
+        filename: 'image.png',
+      }
     );
 
     const response = await axios.post(
