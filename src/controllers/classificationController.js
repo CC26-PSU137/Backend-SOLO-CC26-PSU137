@@ -21,22 +21,18 @@ export const uploadImage = async (
       );
     }
 
-    // upload ke cloudinary
-    const imageUrl =
-      await uploadToCloudinary(
-        req.file.path
-      );
-
-    // kirim ke AI
     const predictionResult =
       await predictImage(
         req.file.path
       );
 
-    // hapus file lokal sementara
+    const imageUrl =
+      await uploadToCloudinary(
+        req.file.path
+      );
+
     fs.unlinkSync(req.file.path);
 
-    // simpan database
     const classification =
       await prisma.classification.create({
         data: {
