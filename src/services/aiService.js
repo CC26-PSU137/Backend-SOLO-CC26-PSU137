@@ -1,14 +1,11 @@
 import axios from 'axios';
 import FormData from 'form-data';
 
-import fs from 'fs';
-
-const predictImage = async (imagePath) => {
+const predictImage = async (
+  fileBuffer
+) => {
   try {
     const formData = new FormData();
-
-    const fileBuffer =
-      fs.readFileSync(imagePath);
 
     formData.append(
       'file',
@@ -24,13 +21,16 @@ const predictImage = async (imagePath) => {
       formData,
 
       {
-        headers: formData.getHeaders(),
+        headers:
+          formData.getHeaders(),
 
         timeout: 10000,
       }
     );
 
-    if (!response.data.prediction) {
+    if (
+      !response.data.prediction
+    ) {
       throw new Error(
         'Invalid AI response'
       );

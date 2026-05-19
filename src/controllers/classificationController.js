@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import prisma from '../config/prisma.js';
 
 import predictImage from '../services/aiService.js';
@@ -21,18 +19,23 @@ export const uploadImage = async (
       );
     }
 
+    // buffer dari multer
+    const fileBuffer =
+      req.file.buffer;
+
+    // AI prediction
     const predictionResult =
       await predictImage(
-        req.file.path
+        fileBuffer
       );
 
+    // upload cloudinary
     const imageUrl =
       await uploadToCloudinary(
-        req.file.path
+        fileBuffer
       );
 
-    fs.unlinkSync(req.file.path);
-
+    // save database
     const classification =
       await prisma.classification.create({
         data: {
@@ -47,7 +50,8 @@ export const uploadImage = async (
           description:
             predictionResult.description,
 
-          userId: req.user.userId,
+          userId:
+            req.user.userId,
         },
       });
 
@@ -74,7 +78,8 @@ export const getHistory = async (
     const history =
       await prisma.classification.findMany({
         where: {
-          userId: req.user.userId,
+          userId:
+            req.user.userId,
         },
 
         orderBy: {

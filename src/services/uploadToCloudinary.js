@@ -1,19 +1,30 @@
-import cloudinary
-  from '../config/cloudinary.js';
+import cloudinary from '../config/cloudinary.js';
 
 const uploadToCloudinary = async (
-  filePath
+  fileBuffer
 ) => {
-  const result =
-    await cloudinary.uploader.upload(
-      filePath,
+  return new Promise(
+    (resolve, reject) => {
+      const stream =
+        cloudinary.uploader.upload_stream(
+          {
+            folder: 'solo',
+          },
 
-      {
-        folder: 'solo',
-      }
-    );
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(
+                result.secure_url
+              );
+            }
+          }
+        );
 
-  return result.secure_url;
+      stream.end(fileBuffer);
+    }
+  );
 };
 
 export default uploadToCloudinary;
