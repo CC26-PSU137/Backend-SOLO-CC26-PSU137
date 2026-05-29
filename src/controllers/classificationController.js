@@ -19,23 +19,19 @@ export const uploadImage = async (
       );
     }
 
-    // buffer dari multer
     const fileBuffer =
       req.file.buffer;
 
-    // AI prediction
     const predictionResult =
       await predictImage(
         fileBuffer
       );
 
-    // upload cloudinary
     const imageUrl =
       await uploadToCloudinary(
         fileBuffer
       );
 
-    // save database
     const classification =
       await prisma.classification.create({
         data: {
