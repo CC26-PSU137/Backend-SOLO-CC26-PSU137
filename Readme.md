@@ -2,7 +2,7 @@
 
 ## Deskripsi Singkat Proyek
 
-SOLO (Smart Organic & Lifestyle Organizer) adalah backend API untuk aplikasi edukasi klasifikasi sampah berbasis AI. Sistem ini memungkinkan pengguna melakukan registrasi dan login akun, mengunggah gambar sampah, mendapatkan hasil klasifikasi otomatis dari model AI, serta menyimpan riwayat klasifikasi pengguna.
+SOLO (Sortir & Olah Limbah Online) adalah backend API untuk aplikasi edukasi klasifikasi sampah berbasis AI. Sistem ini memungkinkan pengguna melakukan registrasi dan login akun, mengunggah gambar sampah, mendapatkan hasil klasifikasi otomatis dari model AI, serta menyimpan riwayat klasifikasi pengguna.
 
 Project ini dibangun sebagai backend modern berbasis cloud dengan integrasi:
 
@@ -165,6 +165,47 @@ https://backend-solo-cc26-psu137-production.up.railway.app/api
 
 ---
 
+# Standard API Response
+
+## Success Response
+
+```json
+{
+  "status": "success",
+  "message": "Operation success",
+  "data": {}
+}
+```
+
+## Error Response
+
+```json
+{
+  "status": "failed",
+  "message": "Error message",
+  "data": null
+}
+```
+
+---
+
+# Authentication
+
+Endpoint tertentu memerlukan JWT Token.
+
+Tambahkan token pada header request:
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+Protected Endpoints:
+
+* POST /classification
+* GET /classification/history
+
+---
+
 # 1. Register User
 
 ## Endpoint
@@ -182,13 +223,52 @@ POST /auth/register
 }
 ```
 
-## Response
+## Success Response
+
+Status Code:
+
+```http
+201 Created
+```
 
 ```json
 {
   "status": "success",
-  "message": "Register success"
+  "message": "Register success",
+  "data": {
+    "id": "clxxxxxx",
+    "email": "user@gmail.com",
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  }
 }
+```
+
+## Error Response
+
+### Email Already Exists
+
+```http
+409 Conflict
+```
+
+```json
+{
+  "status": "failed",
+  "message": "Email already exists",
+  "data": null
+}
+```
+
+### Invalid Email Format
+
+```http
+400 Bad Request
+```
+
+### Password Too Short
+
+```http
+400 Bad Request
 ```
 
 ---
@@ -210,7 +290,13 @@ POST /auth/login
 }
 ```
 
-## Response
+## Success Response
+
+Status Code:
+
+```http
+200 OK
+```
 
 ```json
 {
@@ -219,6 +305,22 @@ POST /auth/login
   "data": {
     "token": "JWT_TOKEN"
   }
+}
+```
+
+## Error Response
+
+### Invalid Email or Password
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "status": "failed",
+  "message": "Invalid email or password",
+  "data": null
 }
 ```
 
@@ -235,29 +337,77 @@ POST /classification
 ## Headers
 
 ```http
-Authorization: Bearer TOKEN
+Authorization: Bearer JWT_TOKEN
 ```
 
-## Body
+## Request Body
 
-Gunakan `form-data`
+Gunakan form-data.
 
-| Key  | Type |
-| ---- | ---- |
-| file | File |
+| Key   | Type |
+| ----- | ---- |
+| image | File |
 
-## Response
+## Success Response
+
+Status Code:
+
+```http
+201 Created
+```
 
 ```json
 {
   "status": "success",
   "message": "Classification success",
   "data": {
-    "imageUrl": "https://cloudinary-url",
-    "prediction": "B3",
-    "confidence": 1,
-    "description": "Sampah beracun yang memerlukan penanganan khusus"
+    "id": "clxxxxxx",
+    "imageUrl": "https://res.cloudinary.com/...",
+    "prediction": "ORGANIK",
+    "confidence": 0.98,
+    "description": "Sampah organik yang dapat terurai secara alami",
+    "createdAt": "2025-01-01T00:00:00.000Z"
   }
+}
+```
+
+## Error Response
+
+### Missing Token
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+### Invalid Token
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+### Missing Image File
+
+```http
+400 Bad Request
+```
+
+```json
+{
+  "status": "failed",
+  "message": "Image is required",
+  "data": null
 }
 ```
 
@@ -274,10 +424,16 @@ GET /classification/history
 ## Headers
 
 ```http
-Authorization: Bearer TOKEN
+Authorization: Bearer JWT_TOKEN
 ```
 
-## Response
+## Success Response
+
+Status Code:
+
+```http
+200 OK
+```
 
 ```json
 {
@@ -287,54 +443,81 @@ Authorization: Bearer TOKEN
 }
 ```
 
+## Error Response
+
+### Missing Token
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+### Invalid Token
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
 ---
 
-# Taudan Model ML (Jika Ada)
+# HTTP Status Codes
 
-Model Machine Learning yang digunakan berada pada layanan AI terpisah.
+| Code | Description           |
+| ---- | --------------------- |
+| 200  | Success               |
+| 201  | Resource Created      |
+| 400  | Validation Error      |
+| 401  | Unauthorized          |
+| 409  | Conflict              |
+| 500  | Internal Server Error |
 
-AI Service digunakan untuk melakukan klasifikasi gambar sampah ke dalam kategori:
+---
+
+# API Testing
+
+## Success Test Cases
+
+* Register User
+* Login User
+* Upload Classification
+* Get Classification History
+
+## Failure Test Cases
+
+* Register With Existing Email
+* Login Invalid Email
+* Login Password Less Than 6 Characters
+* Login Wrong Password
+* Missing JWT Token
+* Invalid JWT Token
+* Upload Without Image
+
+---
+
+# AI Service
+
+Kategori klasifikasi yang tersedia:
 
 * ORGANIK
 * ANORGANIK
 * B3
 
-Link AI Service:
+AI Service URL:
 
 ```text
 https://solo-ai-service-production.up.railway.app
 ```
-
----
-
-# Struktur Folder
-
-```text
-src/
- ├── config/
- ├── controllers/
- ├── middlewares/
- ├── routes/
- ├── services/
- ├── utils/
- └── validations/
-```
-
----
-
-# Deployment
-
-## Backend Deployment
-
-* Railway
-
-## Database
-
-* NeonDB PostgreSQL
-
-## Image Storage
-
-* Cloudinary
 
 ---
 
@@ -350,13 +533,16 @@ Frontend Save Token
 Token Sent via Authorization Header
    ↓
 Backend Verify Token
+   ↓
+Access Protected Route
 ```
 
 ---
 
 # Author
 
-Backend SOLO CC26 PSU137 : Muhammad Ajar Danu Wiratama
+Backend SOLO CC26 PSU137
+Muhammad Ajar Danu Wiratama
 
 ---
 
