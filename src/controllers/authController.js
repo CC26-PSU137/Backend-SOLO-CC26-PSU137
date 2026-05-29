@@ -12,13 +12,20 @@ import {
 
 export const register = async (req, res) => {
   try {
-    // VALIDATION
     const validatedData =
-      registerSchema.parse(req.body);
+      registerSchema.safeParse(req.body);
 
-    const { email, password } = validatedData;
+    if (!validatedData.success) {
+      return response(
+        res,
+        400,
+        validatedData.error.issues[0].message
+      );
+    }
 
-    // CHECK USER
+    const { email, password } =
+      validatedData.data;
+
     const existingUser =
       await prisma.user.findUnique({
         where: { email },
@@ -27,29 +34,27 @@ export const register = async (req, res) => {
     if (existingUser) {
       return response(
         res,
-        400,
+        409,
         'Email already exists'
       );
     }
 
-    // HASH PASSWORD
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
-    // CREATE USER
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
+    const user =
+      await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+        },
 
-      // JANGAN RETURN PASSWORD
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-      },
-    });
+        select: {
+          id: true,
+          email: true,
+          createdAt: true,
+        },
+      });
 
     return response(
       res,
@@ -58,10 +63,15 @@ export const register = async (req, res) => {
       user
     );
   } catch (error) {
+    console.error(
+      'Register Error:',
+      error
+    );
+
     return response(
       res,
       500,
-      error.message
+      'Internal Server Error'
     );
   }
 };
@@ -70,11 +80,19 @@ export const login = async (req, res) => {
   try {
     // VALIDATION
     const validatedData =
-      loginSchema.parse(req.body);
+      loginSchema.safeParse(req.body);
 
-    const { email, password } = validatedData;
+    if (!validatedData.success) {
+      return response(
+        res,
+        400,
+        validatedData.error.issues[0].message
+      );
+    }
 
-    // FIND USER
+    const { email, password } =
+      validatedData.data;
+
     const user =
       await prisma.user.findUnique({
         where: { email },
@@ -83,12 +101,11 @@ export const login = async (req, res) => {
     if (!user) {
       return response(
         res,
-        404,
-        'User not found'
+        401,
+        'Invalid email or password'
       );
     }
 
-    // CHECK PASSWORD
     const isMatch =
       await bcrypt.compare(
         password,
@@ -98,12 +115,11 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return response(
         res,
-        400,
-        'Invalid credentials'
+        401,
+        'Invalid email or password'
       );
     }
 
-    // GENERATE TOKEN
     const token = jwt.sign(
       {
         userId: user.id,
@@ -123,10 +139,15 @@ export const login = async (req, res) => {
       }
     );
   } catch (error) {
+    console.error(
+      'Login Error:',
+      error
+    );
+
     return response(
       res,
       500,
-      error.message
+      'Internal Server Error'
     );
   }
 };
